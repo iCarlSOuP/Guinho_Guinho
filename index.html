@@ -2,45 +2,90 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="robots" content="noindex, nofollow">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
   <title>Guinho_Loader</title>
   <link rel="icon" href="assets/guinho.ico" type="image/png" />
   <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    body {
+    * {
       margin: 0;
-      background-color: #ffffff;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      font-family: 'Mulish', sans-serif;
+      padding: 0;
+      box-sizing: border-box;
     }
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #ffffff 0%, #f4f6fb 100%);
+      font-family: 'Mulish', sans-serif;
+      overflow: hidden;
+    }
+    .loader-container {
+      position: relative;
+      padding: 18px;
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.95);
 
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.12),
+        0 8px 20px rgba(0, 0, 0, 0.08);
+      animation: float 3s ease-in-out infinite;
+    }
+    /* Brillo inferior */
+    .loader-container::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -18px;
+      transform: translateX(-50%);
+      width: 70%;
+      height: 18px;
+      background: rgba(0, 0, 0, 0.12);
+      filter: blur(18px);
+      border-radius: 50%;
+      z-index: -1;
+    }
     .loader {
-      width: 80%;
+      display: block;
+      width: 100%;
       max-width: 400px;
       height: auto;
+      border-radius: 18px;
     }
-
+    @keyframes float {
+      0%,100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
     @media (max-width: 480px) {
       .loader {
-        width: 90%;
         max-width: 280px;
       }
-    }
-
-    @media (min-width: 1024px) {
-      .loader {
-        max-width: 600px;
+      .loader-container {
+        padding: 14px;
+        border-radius: 22px;
       }
     }
-
+    @media (min-width: 1024px) {
+      .loader {
+        max-width: 560px;
+      }
+    }
   </style>
 </head>
 <body>
-  <img class="loader" src="assets/bob.gif" alt="Loading..." />
+  <div class="loader-container">
+    <img
+      class="loader"
+      src="assets/bob.gif"
+      alt="Cargando..."
+    />
+  </div>
   <script>
     setTimeout(() => {
       window.location.href = "auth.html";
