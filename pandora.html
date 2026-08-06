@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Visor Seguro - Guiño Guiño</title>
+    
+    <!-- Librerías necesarias -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+    <!-- Configuración Firebase -->
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAA7SZYGbCZrBpurLVrW4RPbM5Zl-32Mog",
+            authDomain: "trkkn-cot-firebase.firebaseapp.com",
+            projectId: "trkkn-cot-firebase",
+            storageBucket: "trkkn-cot-firebase.firebasestorage.app",
+            messagingSenderId: "490397786735",
+            appId: "1:490397786735:web:6cc8d158f904865bdc239a"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <style>
+        /* Diseño oscuro, funcional y minimalista */
+        body {
+            margin: 0;
+            background-color: #121212;
+            color: #ffffff;
+            font-family: monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            /* Anti-selección */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            visibility: hidden; /* Oculto hasta validar Firebase */
+        }
+
+        /* Anti-impresión */
+        @media print {
+            body { display: none !important; }
+        }
+
+        canvas {
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.9);
+            max-width: 100%;
+        }
+
+        /* Marca de Agua Desafiante */
+        #watermark-container {
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            pointer-events: none;
+            z-index: 9999;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-content: center;
+            opacity: 0.15;
+            transform: rotate(-25deg);
+            overflow: hidden;
+        }
+
+        .watermark-text {
+            font-size: 16px;
+            color: #ff0000;
+            font-weight: 900;
+            padding: 40px;
+            white-space: pre-line;
+            text-align: center;
+            text-shadow: 2px 2px 0 #fff;
+            line-height: 1.2;
+        }
+
+        /* Trampa Blackout (Pantalla Negra) */
+        #blackout-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background-color: #000;
+            color: #DB0000;
+            z-index: 999999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Pantalla Negra Anti-Capturas -->
+    <div id="blackout-screen">
+        <div>
+            <h1>🚫 ACCESO DENEGADO 🚫</h1>
+            <p>Intento de captura de pantalla bloqueado.<br>Incidente registrado en el servidor.</p>
+        </div>
+    </div>
+
+    <!-- Contenedor Marca de Agua -->
+    <div id="watermark-container"></div>
+    
+    <!-- Contenedor PDF -->
+    <div id="pdf-container"></div>
+
+    <script>
+        // 1. VALIDACIÓN DE SESIÓN (FIREBASE)
+        const auth = firebase.auth();
+        let userEmail = "Usuario Desconocido";
+
+        auth.onAuthStateChanged(user => {
+            if (!user) {
+                window.location.href = "auth.html";
+            } else {
+                userEmail = user.email; // Guardamos el correo para la marca de agua
+                document.body.style.visibility = "visible"; // Mostramos la web
+                iniciarCargaSegura();
+            }
+        });
+
+        // 2. SEGURIDAD DE INTERFAZ (Anti-Click y Atajos)
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('keydown', e => {
+            if (e.key === 'F12' || (e.ctrlKey && ['p', 's', 'u', 'c', 'x', 'a'].includes(e.key.toLowerCase()))) {
+                e.preventDefault();
+            }
+        });
+
+        // 3. TRAMPA DE PANTALLA NEGRA
+        const blackout = document.getElementById('blackout-screen');
+        window.addEventListener('blur', () => blackout.style.display = 'flex');
+        window.addEventListener('focus', () => blackout.style.display = 'none');
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'PrintScreen') alert('Capturas prohibidas.');
+        });
+
+        // 4. MARCA DE AGUA DINÁMICA
+        async function aplicarMarcaDeAgua() {
+            const container = document.getElementById('watermark-container');
+            const fecha = new Date().toLocaleString();
+            let ip = 'Rastreada';
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                const data = await res.json();
+                ip = data.ip;
+            } catch(e) {}
+
+            const mensaje = `⚠ CONFIDENCIAL ⚠\nCUENTA: ${userEmail}\nIP: ${ip}\n${fecha}\nFiltración = Despido / Acción Legal`;
+
+            for (let i = 0; i < 80; i++) {
+                const div = document.createElement('div');
+                div.className = 'watermark-text';
+                div.textContent = mensaje;
+                container.appendChild(div);
+            }
+        }
+
+        // 5. MOTOR DE DESENCRIPTADO Y RENDERIZADO (PDF.js)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        async function iniciarCargaSegura() {
+            // Pedimos la clave del documento al usuario
+            const password = prompt("Ingrese la contraseña de descifrado del documento:");
+            if (!password) {
+                document.body.innerHTML = "<h2 style='color:red; text-align:center;'>Acceso cancelado.</h2>";
+                return;
+            }
+
+            try {
+                // 5.1 Descargamos la "basura encriptada"
+                const response = await fetch('ttmbp.enc');
+                if (!response.ok) throw new Error("Archivo no encontrado");
+                const textoEncriptado = await response.text();
+
+                // 5.2 Desencriptamos usando AES
+                const bytes = CryptoJS.AES.decrypt(textoEncriptado, password);
+                const base64PDF = bytes.toString(CryptoJS.enc.Utf8);
+                
+                if (!base64PDF) throw new Error("Contraseña incorrecta");
+
+                // 5.3 Convertimos Base64 a datos binarios para PDF.js
+                const base64Data = base64PDF.split(',')[1];
+                const pdfDatosBinarios = atob(base64Data);
+                const arrayBytes = new Uint8Array(pdfDatosBinarios.length);
+                for (let i = 0; i < pdfDatosBinarios.length; i++) {
+                    arrayBytes[i] = pdfDatosBinarios.charCodeAt(i);
+                }
+
+                // 5.4 Renderizamos el PDF
+                const pdf = await pdfjsLib.getDocument({ data: arrayBytes }).promise;
+                const pdfContainer = document.getElementById('pdf-container');
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const pagina = await pdf.getPage(i);
+                    const viewport = pagina.getViewport({ scale: 1.5 });
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                    await pagina.render({ canvasContext: ctx, viewport: viewport }).promise;
+                    pdfContainer.appendChild(canvas);
+                }
+
+                aplicarMarcaDeAgua();
+
+            } catch (error) {
+                console.error(error);
+                alert("Error: Contraseña incorrecta o archivo no disponible.");
+                document.body.innerHTML = "<h2 style='color:red; text-align:center;'>Fallo de desencriptado.</h2>";
+            }
+        }
+    </script>
+</body>
+</html>
