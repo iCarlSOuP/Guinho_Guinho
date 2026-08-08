@@ -43,7 +43,7 @@
 
         @media print { body { display: none !important; } }
 
-        /* Pantalla de inicio unificada */
+        /* Pantalla de inicio minimalista con Input integrado */
         #start-screen {
             display: flex; flex-direction: column;
             align-items: center; justify-content: center; z-index: 10000;
@@ -52,7 +52,27 @@
         #start-screen h2 {
             font-family: "Goldman", sans-serif;
             font-size: 24px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
+        }
+
+        #doc-password {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #111;
+            color: #fff;
+            font-family: 'Goldman', sans-serif;
+            font-size: 12px;
+            text-align: center;
+            width: 250px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        #doc-password:focus {
+            border-color: #DB0000;
+            box-shadow: 0 0 8px rgba(219, 0, 0, 0.4);
         }
 
         #start-btn {
@@ -66,6 +86,7 @@
             cursor: pointer;
             letter-spacing: 0.5px;
             transition: all 0.25s ease;
+            width: 280px;
         }
 
         #start-btn:hover {
@@ -114,31 +135,28 @@
         
         #page_count_info span { color: #fff; }
 
-        /* Marca de Agua de Cobertura Total y Alta Densidad */
+        /* Marca de Agua Menos Invasiva (Opacity reducida) */
         #watermark-container {
             position: fixed;
-            top: -100%; 
-            left: -100%;
-            width: 300%; 
-            height: 300%;
+            top: -100%; left: -100%;
+            width: 300%; height: 300%;
             pointer-events: none;
             z-index: 9998;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.48; /* Nivel óptimo de visibilidad sin tapar la lectura */
+            opacity: 0.28; /* <-- Reducida para interferir menos con la lectura */
             transform: rotate(-25deg);
             overflow: hidden;
         }
 
         .watermark-text {
             font-family: monospace;
-            font-size: 13px; /* Tamaño reducido para multiplicar repeticiones */
+            font-size: 13px; 
             color: #DB0000;
             font-weight: 900;
             white-space: pre-wrap;
             text-align: justify;
-            /* Doble borde (blanco y negro) para contraste nítido sobre fondos claros y oscuros */
             text-shadow: 1px 1px 0px #ffffff, -1px -1px 0px #000000;
             line-height: 1.25;
             width: 100%;
@@ -163,8 +181,10 @@
         <p style="font-family: 'Mulish', sans-serif;">Intento de captura de pantalla bloqueado.<br>Incidente registrado en el servidor.</p>
     </div>
 
+    <!-- Interfaz de inicio mejorada -->
     <div id="start-screen">
         <h2>🤫 Proyecto TT_MBP</h2>
+        <input type="password" id="doc-password" placeholder="Contraseña de descifrado" autocomplete="off" />
         <button id="start-btn">🔒 Abrir Documento</button>
     </div>
 
@@ -200,12 +220,15 @@
             if (e.key === 'F12' || (e.ctrlKey && ['p', 's', 'u', 'c', 'x', 'a', '+', '-'].includes(e.key.toLowerCase()))) {
                 e.preventDefault();
             }
+            // Permitir que el "Enter" en el input dispare el botón
+            if (e.key === 'Enter' && document.activeElement.id === 'doc-password') {
+                document.getElementById('start-btn').click();
+            }
         });
 
         const blackout = document.getElementById('blackout-screen');
         window.addEventListener('blur', () => blackout.style.display = 'flex');
         window.addEventListener('focus', () => blackout.style.display = 'none');
-        // Extra: Si el mouse sale de la ventana (hacia la barra de tareas)
         document.addEventListener('mouseleave', () => blackout.style.display = 'flex');
         document.addEventListener('mouseenter', () => blackout.style.display = 'none');
         
@@ -213,7 +236,7 @@
             if (e.key === 'PrintScreen') alert('Capturas estrictamente prohibidas.');
         });
 
-        // Generador de Marca de Agua Continua y Densa
+        // Generador de Marca de Agua Continua sin ID
         async function aplicarMarcaDeAgua() {
             const container = document.getElementById('watermark-content');
             const fecha = new Date().toLocaleString();
@@ -224,36 +247,36 @@
                 ip = datos.ip;
             } catch(e) {}
 
-            // Hash de rastreo único
-            const trackId = CryptoJS.MD5(userEmail + ip + fecha).toString().substring(0, 8).toUpperCase();
-
-            // Líneas con inyección continua del correo
+            // Se reemplazó el ID por "I'll be watching you!"
             const lineaUserPura   = `[USER: ${userEmail}] `.repeat(28);
-            const lineaDetalles   = `IP:${ip} • ${fecha} • ID:${trackId} • [USER: ${userEmail}] `.repeat(14);
+            const lineaDetalles   = `IP:${ip} • ${fecha} • I'll be watching you! • [USER: ${userEmail}] `.repeat(14);
             const lineaAlerta     = `⚠️ RESTRICTED ⚠️ [USER: ${userEmail}] ⚠️ DO NOT SHARE ⚠️ `.repeat(16);
 
-            // Patrón denso intercalado
             const bloque = `${lineaUserPura}\n${lineaDetalles}\n${lineaAlerta}\n${lineaUserPura}\n\n`;
-            
-            // Repetición masiva para cubrir todo el viewport
             container.textContent = bloque.repeat(35);
         }
 
-        document.getElementById('start-btn').addEventListener('click', () => {
+        // Flujo de apertura seguro
+        document.getElementById('start-btn').addEventListener('click', async () => {
+            const password = document.getElementById('doc-password').value;
+            
+            if (!password) {
+                alert("Debes ingresar la contraseña para continuar.");
+                return;
+            }
+
+            // Forzar Pantalla Completa
             const elem = document.documentElement;
-            if (elem.requestFullscreen) elem.requestFullscreen(); 
-            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); 
-            setTimeout(() => iniciarCargaSegura(), 500);
+            if (elem.requestFullscreen) { elem.requestFullscreen(); }
+            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); }
+
+            // Procesar el documento
+            await iniciarCargaSegura(password);
         });
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        async function iniciarCargaSegura() {
-            const password = prompt("Ingrese la contraseña de descifrado para ttmbp.enc:");
-            if (!password) {
-                if (document.exitFullscreen) document.exitFullscreen();
-                return;
-            }
+        async function iniciarCargaSegura(password) {
             try {
                 const response = await fetch('ttmbp.enc');
                 if (!response.ok) throw new Error("Archivo no encontrado");
@@ -271,6 +294,7 @@
                     arrayBytes[i] = pdfDatosBinarios.charCodeAt(i);
                 }
 
+                // Transición de interfaz
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('viewer-area').style.display = 'flex';
 
@@ -279,19 +303,30 @@
                 pdfDoc = await pdfjsLib.getDocument({ data: arrayBytes }).promise;
                 document.getElementById('page_count').textContent = pdfDoc.numPages;
                 renderPage(pageNum);
+
             } catch (error) {
                 console.error(error);
                 alert("Error: Contraseña incorrecta o archivo no disponible.");
                 if (document.exitFullscreen) document.exitFullscreen();
+                document.getElementById('doc-password').value = ''; // Limpiar el input si falla
             }
         }
 
+        // Renderizado Dinámico Mejorado (Sin esquinas cortadas)
         async function renderPage(num) {
             pageRendering = true;
             const page = await pdfDoc.getPage(num);
             const scaleUnadjusted = page.getViewport({ scale: 1 });
+            
+            // Medimos tanto el alto como el ancho de la ventana
             const windowHeight = window.innerHeight * 0.95; 
-            const dynamicScale = windowHeight / scaleUnadjusted.height;
+            const windowWidth = window.innerWidth * 0.95;
+            
+            // Escogemos la escala más estricta para que encaje completo
+            const scaleHeight = windowHeight / scaleUnadjusted.height;
+            const scaleWidth = windowWidth / scaleUnadjusted.width;
+            const dynamicScale = Math.min(scaleHeight, scaleWidth);
+
             const viewport = page.getViewport({ scale: dynamicScale });
             canvas.height = viewport.height;
             canvas.width = viewport.width;
