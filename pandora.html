@@ -114,31 +114,35 @@
         
         #page_count_info span { color: #fff; }
 
-        /* Marca de Agua Extrema */
+        /* Marca de Agua de Cobertura Total y Alta Densidad */
         #watermark-container {
             position: fixed;
-            top: -50%; left: -50%;
-            width: 200%; height: 200%;
+            top: -100%; 
+            left: -100%;
+            width: 300%; 
+            height: 300%;
             pointer-events: none;
             z-index: 9998;
             display: flex;
             align-items: center;
             justify-content: center;
-            opacity: 0.55; 
+            opacity: 0.48; /* Nivel óptimo de visibilidad sin tapar la lectura */
             transform: rotate(-25deg);
             overflow: hidden;
         }
 
         .watermark-text {
             font-family: monospace;
-            font-size: 20px;
+            font-size: 13px; /* Tamaño reducido para multiplicar repeticiones */
             color: #DB0000;
             font-weight: 900;
-            white-space: pre-wrap; /* Permite que el bloque gigante se acomode */
+            white-space: pre-wrap;
             text-align: justify;
-            text-shadow: 1px 1px 2px #000;
-            line-height: 1.5;
-            width: 150%;
+            /* Doble borde (blanco y negro) para contraste nítido sobre fondos claros y oscuros */
+            text-shadow: 1px 1px 0px #ffffff, -1px -1px 0px #000000;
+            line-height: 1.25;
+            width: 100%;
+            letter-spacing: 0.5px;
         }
 
         /* Trampa Blackout */
@@ -209,30 +213,30 @@
             if (e.key === 'PrintScreen') alert('Capturas estrictamente prohibidas.');
         });
 
-        // Generador de Marca de Agua Continua
+        // Generador de Marca de Agua Continua y Densa
         async function aplicarMarcaDeAgua() {
             const container = document.getElementById('watermark-content');
             const fecha = new Date().toLocaleString();
             let ip = 'Rastreada';
             try {
                 const res = await fetch('https://api.ipify.org?format=json');
-                const data = await res.json();
-                ip = data.ip;
+                const datos = await res.json();
+                ip = datos.ip;
             } catch(e) {}
 
-            // Crear un ID de rastreo único (Hash corto)
+            // Hash de rastreo único
             const trackId = CryptoJS.MD5(userEmail + ip + fecha).toString().substring(0, 8).toUpperCase();
 
-            // Bloques continuos
-            const l1 = "⚠️RESTRICTED⚠️ ".repeat(30);
-            const l2 = `User: ${userEmail} `.repeat(15);
-            const l3 = `IP: ${ip} `.repeat(20);
-            const l4 = `${fecha} `.repeat(20);
-            const l5 = `DO NOT SHARE - I'll be watching you! [ID:${trackId}] `.repeat(10);
+            // Líneas con inyección continua del correo
+            const lineaUserPura   = `[USER: ${userEmail}] `.repeat(28);
+            const lineaDetalles   = `IP:${ip} • ${fecha} • ID:${trackId} • [USER: ${userEmail}] `.repeat(14);
+            const lineaAlerta     = `⚠️ RESTRICTED ⚠️ [USER: ${userEmail}] ⚠️ DO NOT SHARE ⚠️ `.repeat(16);
+
+            // Patrón denso intercalado
+            const bloque = `${lineaUserPura}\n${lineaDetalles}\n${lineaAlerta}\n${lineaUserPura}\n\n`;
             
-            // Unir y repetir masivamente
-            const bloque = `${l1}\n${l2}\n${l3}\n${l4}\n${l5}\n\n`;
-            container.textContent = bloque.repeat(15);
+            // Repetición masiva para cubrir todo el viewport
+            container.textContent = bloque.repeat(35);
         }
 
         document.getElementById('start-btn').addEventListener('click', () => {
