@@ -2,18 +2,20 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <!-- BLOQUEO DE ZOOM: maximum-scale=1.0 y user-scalable=no prohíben el pellizco en pantallas táctiles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
     <title>Visor Seguro - Guiño Guiño</title>
     
-    <!-- Librerías necesarias -->
+    <!-- Fuentes unificadas con auth y menu -->
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Goldman&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Librerías -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 
-    <!-- Configuración Firebase -->
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAA7SZYGbCZrBpurLVrW4RPbM5Zl-32Mog",
@@ -27,111 +29,92 @@
     </script>
 
     <style>
-        /* Diseño oscuro, funcional y minimalista */
         body, html {
-            margin: 0;
-            padding: 0;
-            background-color: #000000; /* Fondo totalmente negro */
+            margin: 0; padding: 0;
+            background-color: #000000;
             color: #ffffff;
-            font-family: monospace;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh; /* Ocupa exactamente el 100% de la ventana */
-            overflow: hidden; /* Evita el scroll general */
-            
-            /* Anti-selección */
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-            visibility: hidden; /* Oculto hasta validar Firebase */
+            font-family: 'Mulish', sans-serif;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100vh; overflow: hidden;
+            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
+            visibility: hidden; 
         }
 
-        /* Anti-impresión */
-        @media print {
-            body { display: none !important; }
-        }
+        @media print { body { display: none !important; } }
 
-        /* Pantalla de inicio para forzar la interacción y el FullScreen */
+        /* Pantalla de inicio unificada */
         #start-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 10000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10000;
+        }
+
+        #start-screen h2 {
+            font-family: "Goldman", sans-serif;
+            font-size: 24px;
+            margin-bottom: 30px;
         }
 
         #start-btn {
-            padding: 15px 30px;
-            background: #DB0000;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
+            padding: 12px 24px;
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            font-family: "Goldman", sans-serif;
+            font-size: 14px;
             cursor: pointer;
-            box-shadow: 0 4px 10px rgba(219,0,0,0.4);
-            transition: transform 0.2s;
+            letter-spacing: 0.5px;
+            transition: all 0.25s ease;
         }
 
-        #start-btn:active {
-            transform: scale(0.95);
+        #start-btn:hover {
+            background: #DB0000;
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+            border: 2px solid #900000;
+            letter-spacing: 1px;
         }
 
-        /* Contenedor del PDF (Oculto inicialmente) */
         #viewer-area {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            height: 100%;
-            position: relative;
+            display: none; flex-direction: column;
+            align-items: center; justify-content: center;
+            width: 100%; height: 100%; position: relative;
         }
 
-        canvas {
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
-            /* Asegura que el canvas no rompa la pantalla, ajustado por JS */
-        }
+        canvas { box-shadow: 0 0 20px rgba(255,255,255,0.1); }
 
-        /* Controles de Paginación flotantes */
+        /* Controles Sobrios */
         #controls {
             position: fixed;
-            bottom: 20px;
-            background: rgba(20, 20, 20, 0.85);
-            padding: 10px 20px;
-            border-radius: 30px;
+            bottom: 25px;
+            background: rgba(10, 10, 10, 0.7);
+            padding: 8px 16px;
+            border-radius: 20px;
             display: flex;
-            gap: 15px;
+            gap: 12px;
             align-items: center;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.8);
+            font-family: "Goldman", sans-serif;
+            font-size: 14px;
+            color: #888;
+            backdrop-filter: blur(5px);
             z-index: 9999;
-            border: 1px solid #333;
         }
 
         #controls button {
             background: transparent;
-            color: white;
-            border: 1px solid #555;
-            padding: 8px 15px;
-            border-radius: 15px;
+            color: #fff;
+            border: none;
+            font-size: 16px;
             cursor: pointer;
-            font-weight: bold;
+            transition: color 0.2s;
         }
 
-        #controls button:hover {
-            background: #DB0000;
-            border-color: #DB0000;
-        }
+        #controls button:hover { color: #DB0000; }
+        
+        #page_count_info span { color: #fff; }
 
-        #page_count_info {
-            font-size: 14px;
-            font-weight: bold;
-        }
-
-        /* Marca de Agua Desafiante (Más grande y densa) */
+        /* Marca de Agua Extrema */
         #watermark-container {
             position: fixed;
             top: -50%; left: -50%;
@@ -139,96 +122,75 @@
             pointer-events: none;
             z-index: 9998;
             display: flex;
-            flex-wrap: wrap;
+            align-items: center;
             justify-content: center;
-            align-content: center;
-            opacity: 0.45; /* Aumentado para hacerla muy visible */
+            opacity: 0.55; 
             transform: rotate(-25deg);
             overflow: hidden;
         }
 
         .watermark-text {
-            font-size: 32px; /* Aumentado drásticamente */
-            color: #ff0000;
+            font-family: monospace;
+            font-size: 20px;
+            color: #DB0000;
             font-weight: 900;
-            padding: 50px;
-            white-space: pre-line;
-            text-align: center;
-            text-shadow: 2px 2px 4px #000000, -1px -1px 0 #ffffff; /* Contraste agresivo */
-            line-height: 1.3;
+            white-space: pre-wrap; /* Permite que el bloque gigante se acomode */
+            text-align: justify;
+            text-shadow: 1px 1px 2px #000;
+            line-height: 1.5;
+            width: 150%;
         }
 
-        /* Trampa Blackout (Pantalla Negra Anti-recortes) */
+        /* Trampa Blackout */
         #blackout-screen {
-            position: fixed;
-            top: 0; left: 0;
+            position: fixed; top: 0; left: 0;
             width: 100vw; height: 100vh;
-            background-color: #000;
-            color: #DB0000;
-            z-index: 999999;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            font-size: 24px;
+            background-color: #000; color: #DB0000;
+            z-index: 999999; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; font-family: 'Goldman', sans-serif;
         }
     </style>
 </head>
 <body>
 
-    <!-- Pantalla Negra Anti-Capturas -->
     <div id="blackout-screen">
-        <div>
-            <h1>🚫 ACCESO DENEGADO 🚫</h1>
-            <p>Intento de captura de pantalla bloqueado.<br>Incidente registrado en el servidor.</p>
-        </div>
+        <h1 style="font-size: 32px;">🚫 ACCESO DENEGADO 🚫</h1>
+        <p style="font-family: 'Mulish', sans-serif;">Intento de captura de pantalla bloqueado.<br>Incidente registrado en el servidor.</p>
     </div>
 
-    <!-- Pantalla Inicial (Botón) -->
     <div id="start-screen">
-        <h2 style="margin-bottom: 30px;">Proyecto 🤫 TT_MBP</h2>
-        <button id="start-btn">🔒 Abrir Documento en Pantalla Completa</button>
+        <h2>🤫 Proyecto TT_MBP</h2>
+        <button id="start-btn">🔒 Abrir Documento</button>
     </div>
 
-    <!-- Área del Visor (Solo visible tras el desencriptado) -->
     <div id="viewer-area">
-        <!-- Contenedor Marca de Agua -->
-        <div id="watermark-container"></div>
-        
-        <!-- Lienzo de la Página Única -->
+        <div id="watermark-container">
+            <div id="watermark-content" class="watermark-text"></div>
+        </div>
         <canvas id="pdf-canvas"></canvas>
-
-        <!-- Controles de Navegación -->
         <div id="controls">
-            <button id="prev-btn">◄ Anterior</button>
-            <span id="page_count_info">Pág. <span id="page_num"></span> de <span id="page_count"></span></span>
-            <button id="next-btn">Siguiente ►</button>
+            <button id="prev-btn">&#9668;</button>
+            <span id="page_count_info"><span id="page_num"></span> / <span id="page_count"></span></span>
+            <button id="next-btn">&#9658;</button>
         </div>
     </div>
 
     <script>
-        // 1. VARIABLES GLOBALES DE PAGINACIÓN
-        let pdfDoc = null,
-            pageNum = 1,
-            pageRendering = false,
-            pageNumPending = null,
-            canvas = document.getElementById('pdf-canvas'),
-            ctx = canvas.getContext('2d');
-
-        // 2. VALIDACIÓN DE SESIÓN (FIREBASE)
+        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
+        const canvas = document.getElementById('pdf-canvas'), ctx = canvas.getContext('2d');
         const auth = firebase.auth();
         let userEmail = "Usuario Desconocido";
 
         auth.onAuthStateChanged(user => {
-            if (!user) {
-                window.location.href = "auth.html";
-            } else {
+            if (!user) window.location.href = "auth.html";
+            else {
                 userEmail = user.email; 
-                document.body.style.visibility = "visible"; // Mostramos la web inicial
+                document.body.style.visibility = "visible"; 
             }
         });
 
-        // 3. SEGURIDAD DE INTERFAZ
+        // Seguridad de Interfaz y Trampas
         document.addEventListener('contextmenu', e => e.preventDefault());
         document.addEventListener('keydown', e => {
             if (e.key === 'F12' || (e.ctrlKey && ['p', 's', 'u', 'c', 'x', 'a', '+', '-'].includes(e.key.toLowerCase()))) {
@@ -239,13 +201,17 @@
         const blackout = document.getElementById('blackout-screen');
         window.addEventListener('blur', () => blackout.style.display = 'flex');
         window.addEventListener('focus', () => blackout.style.display = 'none');
+        // Extra: Si el mouse sale de la ventana (hacia la barra de tareas)
+        document.addEventListener('mouseleave', () => blackout.style.display = 'flex');
+        document.addEventListener('mouseenter', () => blackout.style.display = 'none');
+        
         document.addEventListener('keyup', (e) => {
-            if (e.key === 'PrintScreen') alert('Capturas prohibidas.');
+            if (e.key === 'PrintScreen') alert('Capturas estrictamente prohibidas.');
         });
 
-        // 4. MARCA DE AGUA
+        // Generador de Marca de Agua Continua
         async function aplicarMarcaDeAgua() {
-            const container = document.getElementById('watermark-container');
+            const container = document.getElementById('watermark-content');
             const fecha = new Date().toLocaleString();
             let ip = 'Rastreada';
             try {
@@ -254,27 +220,26 @@
                 ip = data.ip;
             } catch(e) {}
 
-            const mensaje = `⚠ RESTRINGIDO ⚠\nCUENTA: ${userEmail}\nIP: ${ip}\n${fecha}\nFiltración = Terminación Contractual`;
+            // Crear un ID de rastreo único (Hash corto)
+            const trackId = CryptoJS.MD5(userEmail + ip + fecha).toString().substring(0, 8).toUpperCase();
 
-            for (let i = 0; i < 40; i++) {
-                const div = document.createElement('div');
-                div.className = 'watermark-text';
-                div.textContent = mensaje;
-                container.appendChild(div);
-            }
+            // Bloques continuos
+            const l1 = "⚠️RESTRICTED⚠️ ".repeat(30);
+            const l2 = `User: ${userEmail} `.repeat(15);
+            const l3 = `IP: ${ip} `.repeat(20);
+            const l4 = `${fecha} `.repeat(20);
+            const l5 = `DO NOT SHARE - I'll be watching you! [ID:${trackId}] `.repeat(10);
+            
+            // Unir y repetir masivamente
+            const bloque = `${l1}\n${l2}\n${l3}\n${l4}\n${l5}\n\n`;
+            container.textContent = bloque.repeat(15);
         }
 
-        // 5. FLUJO DE APERTURA (FULLSCREEN + CONTRASEÑA)
         document.getElementById('start-btn').addEventListener('click', () => {
-            // Forzar Pantalla Completa
             const elem = document.documentElement;
-            if (elem.requestFullscreen) { elem.requestFullscreen(); }
-            else if (elem.webkitRequestFullscreen) { elem.webkitRequestFullscreen(); } // Safari
-
-            // Darle medio segundo al navegador para asimilar el fullscreen antes del prompt
-            setTimeout(() => {
-                iniciarCargaSegura();
-            }, 500);
+            if (elem.requestFullscreen) elem.requestFullscreen(); 
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen(); 
+            setTimeout(() => iniciarCargaSegura(), 500);
         });
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -282,16 +247,14 @@
         async function iniciarCargaSegura() {
             const password = prompt("Ingrese la contraseña de descifrado para ttmbp.enc:");
             if (!password) {
-                // Si cancelan, salimos de pantalla completa
-                if (document.exitFullscreen) { document.exitFullscreen(); }
+                if (document.exitFullscreen) document.exitFullscreen();
                 return;
             }
-
             try {
                 const response = await fetch('ttmbp.enc');
                 if (!response.ok) throw new Error("Archivo no encontrado");
+                
                 const textoEncriptado = await response.text();
-
                 const bytes = CryptoJS.AES.decrypt(textoEncriptado, password);
                 const base64PDF = bytes.toString(CryptoJS.enc.Utf8);
                 
@@ -304,53 +267,33 @@
                     arrayBytes[i] = pdfDatosBinarios.charCodeAt(i);
                 }
 
-                // Cambiar interfaz: Ocultar botón, mostrar visor
                 document.getElementById('start-screen').style.display = 'none';
                 document.getElementById('viewer-area').style.display = 'flex';
 
                 aplicarMarcaDeAgua();
 
-                // Cargar documento en el motor de Paginación
                 pdfDoc = await pdfjsLib.getDocument({ data: arrayBytes }).promise;
                 document.getElementById('page_count').textContent = pdfDoc.numPages;
-                
-                // Dibujar la primera página
                 renderPage(pageNum);
-
             } catch (error) {
                 console.error(error);
                 alert("Error: Contraseña incorrecta o archivo no disponible.");
-                if (document.exitFullscreen) { document.exitFullscreen(); }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
         }
 
-        // 6. LÓGICA DE RENDERIZADO Y PAGINACIÓN
         async function renderPage(num) {
             pageRendering = true;
-            
-            // Obtener la página del PDF
             const page = await pdfDoc.getPage(num);
-            
-            // Calcular la escala para que encaje al 100% del alto de la pantalla (100vh)
-            // Se le resta un 5% (0.95) para que no quede pegado a los bordes
             const scaleUnadjusted = page.getViewport({ scale: 1 });
             const windowHeight = window.innerHeight * 0.95; 
             const dynamicScale = windowHeight / scaleUnadjusted.height;
-            
             const viewport = page.getViewport({ scale: dynamicScale });
             canvas.height = viewport.height;
             canvas.width = viewport.width;
 
-            // Dibujar la página en el canvas
-            const renderContext = {
-                canvasContext: ctx,
-                viewport: viewport
-            };
-            
-            await page.render(renderContext).promise;
+            await page.render({ canvasContext: ctx, viewport: viewport }).promise;
             pageRendering = false;
-
-            // Actualizar número de página actual en la interfaz
             document.getElementById('page_num').textContent = num;
 
             if (pageNumPending !== null) {
@@ -360,27 +303,19 @@
         }
 
         function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
+            if (pageRendering) pageNumPending = num;
+            else renderPage(num);
         }
 
-        // Botón Anterior
         document.getElementById('prev-btn').addEventListener('click', () => {
             if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
+            pageNum--; queueRenderPage(pageNum);
         });
 
-        // Botón Siguiente
         document.getElementById('next-btn').addEventListener('click', () => {
             if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
+            pageNum++; queueRenderPage(pageNum);
         });
-
     </script>
 </body>
 </html>
